@@ -31,6 +31,9 @@ const START: [number, number, number][] = [
  * move junto com a 2ª.
  */
 const BACK_BAND = 2;
+
+/** Bola central: "solid" (luminosa opaca), "glass" (vidro luminoso) ou "none" */
+const CORE: "solid" | "glass" | "none" = "none" as "solid" | "glass" | "none";
 const LINKED_TO: Record<number, number> = { [BACK_BAND]: 1 };
 
 const ASSEMBLY = 1.8; // duração da montagem (s)
@@ -220,6 +223,27 @@ function LogoGlobe() {
       {bands.map((b, i) => (
         <Band key={i} index={i} data={b} startAt={startAt} />
       ))}
+      {CORE === "solid" && (
+        <mesh>
+          <sphereGeometry args={[0.5, 48, 48]} />
+          <meshStandardMaterial color="#0b3b3c" emissive="#23a8a3" emissiveIntensity={1.5} roughness={0.4} />
+        </mesh>
+      )}
+      {CORE === "glass" && (
+        <mesh>
+          <sphereGeometry args={[0.55, 64, 64]} />
+          <meshPhysicalMaterial
+            color="#6dd7d2"
+            emissive="#23a8a3"
+            emissiveIntensity={0.45}
+            transmission={0.9}
+            thickness={0.6}
+            roughness={0.12}
+            ior={1.35}
+            clearcoat={1}
+          />
+        </mesh>
+      )}
       {/* Luz interna: ilumina a face interna da fita de trás */}
       <pointLight color="#6dd7d2" intensity={1.6} distance={3} />
     </group>
