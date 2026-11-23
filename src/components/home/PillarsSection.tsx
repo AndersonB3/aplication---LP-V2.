@@ -70,13 +70,13 @@ export function PillarsSection() {
 
   return (
     <section id="pilares" ref={section} className="relative overflow-hidden bg-ink-950 text-white">
-      <div className="relative flex min-h-svh flex-col justify-center py-24 lg:py-0">
+      <div className="relative flex flex-col justify-center py-24 lg:motion-safe:min-h-svh lg:motion-safe:py-0">
         <div
           ref={track}
-          className="flex flex-col gap-5 px-4 sm:px-6 lg:w-max lg:flex-row lg:items-stretch lg:gap-6 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))] lg:pr-[10vw]"
+          className="flex flex-col gap-5 px-4 sm:px-6 lg:motion-safe:w-max lg:motion-safe:flex-row lg:motion-safe:items-stretch lg:motion-safe:gap-6 lg:motion-safe:pl-[max(2rem,calc((100vw-80rem)/2+2rem))] lg:motion-safe:pr-[10vw] lg:motion-reduce:mx-auto lg:motion-reduce:grid lg:motion-reduce:max-w-7xl lg:motion-reduce:grid-cols-3 lg:motion-reduce:px-8"
         >
           {/* Intro */}
-          <div className="flex shrink-0 flex-col justify-center pb-6 lg:w-[28rem] lg:pb-0 lg:pr-12">
+          <div className="flex shrink-0 flex-col justify-center pb-6 lg:motion-safe:w-[28rem] lg:motion-safe:pb-0 lg:motion-safe:pr-12 lg:motion-reduce:col-span-3 lg:motion-reduce:pb-8">
             <Eyebrow dark>Por que o ISIBA</Eyebrow>
             <h2 className="mt-5 text-balance font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
               Os pilares da nossa gestão
@@ -90,7 +90,7 @@ export function PillarsSection() {
           {pilares.map((p) => (
             <article
               key={p.titulo}
-              className="flex shrink-0 flex-col justify-end border-t-2 border-brand-400 bg-ink-900 p-8 lg:h-[26rem] lg:w-[22rem]"
+              className="flex shrink-0 flex-col justify-end border-t-2 border-brand-400 bg-ink-900 p-8 lg:motion-safe:h-[26rem] lg:motion-safe:w-[22rem] lg:motion-reduce:justify-start"
             >
               <h3 className="font-display text-2xl font-semibold">{p.titulo}</h3>
               <p className="mt-4 leading-relaxed text-slate-300">{p.texto}</p>
@@ -99,7 +99,7 @@ export function PillarsSection() {
         </div>
 
         {/* Progresso do scroll horizontal */}
-        <div className="absolute inset-x-0 bottom-10 mx-auto hidden h-px max-w-xs bg-white/15 lg:block">
+        <div className="absolute inset-x-0 bottom-10 mx-auto hidden h-px max-w-xs bg-white/15 lg:motion-safe:block">
           <div ref={progress} className="h-full origin-left scale-x-0 bg-brand-400" />
         </div>
       </div>
