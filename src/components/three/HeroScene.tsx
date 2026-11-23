@@ -33,7 +33,7 @@ const START: [number, number, number][] = [
 const BACK_BAND = 2;
 
 /** Bola central: "solid" (luminosa opaca), "glass" (vidro luminoso) ou "none" */
-const CORE: "solid" | "glass" | "none" = "none" as "solid" | "glass" | "none";
+const CORE: "solid" | "glass" | "none" = "glass" as "solid" | "glass" | "none";
 const LINKED_TO: Record<number, number> = { [BACK_BAND]: 1 };
 
 const ASSEMBLY = 1.8; // duração da montagem (s)
