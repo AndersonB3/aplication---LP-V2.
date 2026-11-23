@@ -1,15 +1,16 @@
 import { cn } from "@/lib/utils";
 import { FadeIn } from "./FadeIn";
 
+/** Rótulo de seção: texto em caixa alta precedido de um traço fino */
 export function Eyebrow({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
   return (
     <span
       className={cn(
-        "inline-flex w-fit items-center gap-2 rounded-full border px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]",
-        dark ? "border-brand-400/30 bg-brand-400/10 text-brand-300" : "border-brand-500/20 bg-brand-50 text-brand-700"
+        "flex w-fit items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em]",
+        dark ? "text-brand-300" : "text-brand-700"
       )}
     >
-      <span className={cn("h-1.5 w-1.5 rounded-full", dark ? "bg-brand-300" : "bg-brand-500")} />
+      <span className="h-px w-8 bg-current" aria-hidden />
       {children}
     </span>
   );
@@ -31,16 +32,15 @@ export function SectionHeading({
   className?: string;
 }) {
   return (
-    <FadeIn className={cn(align === "center" && "mx-auto text-center", "max-w-3xl", className)}>
+    <FadeIn className={cn(align === "center" && "mx-auto flex flex-col items-center text-center", "max-w-3xl", className)}>
       <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
       <h2
         className={cn(
-          "mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl",
+          "mt-5 text-balance font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl",
           dark ? "text-white" : "text-ink-900"
         )}
       >
         {title}
-        <span className="text-brand-400">.</span>
       </h2>
       {description && (
         <p className={cn("mt-5 text-lg leading-relaxed", dark ? "text-slate-300" : "text-slate-600")}>{description}</p>

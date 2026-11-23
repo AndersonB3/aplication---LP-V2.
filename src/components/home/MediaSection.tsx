@@ -70,7 +70,7 @@ function VideoModal({ video, onClose }: { video: VideoDef; onClose: () => void }
         transition={{ type: "spring", stiffness: 260, damping: 26 }}
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "relative overflow-hidden rounded-3xl bg-black shadow-2xl",
+          "relative overflow-hidden rounded-lg bg-black shadow-2xl",
           video.vertical ? "aspect-[9/16] max-h-[85vh] w-full max-w-sm" : "aspect-video w-full max-w-5xl"
         )}
       >
@@ -146,7 +146,7 @@ function SlideDeck() {
               onClick={() => offset !== 0 && go(offset)}
               aria-hidden={offset !== 0}
               tabIndex={offset === 0 ? -1 : -1}
-              className="absolute inset-0 overflow-hidden rounded-2xl bg-ink-800 shadow-2xl shadow-black/50"
+              className="absolute inset-0 overflow-hidden rounded-md bg-ink-800 shadow-xl shadow-black/40"
               initial={false}
               animate={{
                 x: `${offset * 62}%`,
@@ -169,7 +169,7 @@ function SlideDeck() {
         <button
           onClick={() => go(-1)}
           aria-label="Slide anterior"
-          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:border-brand-400 hover:bg-brand-400 hover:text-ink-950"
+          className="flex h-12 w-12 items-center justify-center rounded-md border border-white/25 text-white transition-colors hover:border-white hover:bg-white hover:text-ink-900"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -179,7 +179,7 @@ function SlideDeck() {
         <button
           onClick={() => go(1)}
           aria-label="Próximo slide"
-          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:border-brand-400 hover:bg-brand-400 hover:text-ink-950"
+          className="flex h-12 w-12 items-center justify-center rounded-md border border-white/25 text-white transition-colors hover:border-white hover:bg-white hover:text-ink-900"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
@@ -201,7 +201,7 @@ export function MediaSection() {
   }, []);
 
   return (
-    <section id="apresentacao" className="relative overflow-hidden bg-ink-900 py-28 text-white lg:py-40">
+    <section id="apresentacao" className="relative overflow-hidden bg-ink-900 py-24 text-white lg:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           dark
@@ -223,7 +223,7 @@ export function MediaSection() {
                 }}
                 aria-label={`Assistir: ${v.title}`}
                 className={cn(
-                  "group relative block w-full overflow-hidden rounded-[2rem] bg-ink-800",
+                  "group relative block w-full overflow-hidden rounded-lg bg-ink-800",
                   v.vertical ? "aspect-[9/16] md:h-full md:w-auto md:max-h-[28rem]" : "aspect-video"
                 )}
               >
@@ -238,13 +238,10 @@ export function MediaSection() {
                   }}
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink-950/90 via-ink-950/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 to-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="relative flex h-20 w-20 items-center justify-center">
-                    <span className="absolute inset-0 animate-pulse-ring rounded-full bg-brand-400/40" />
-                    <span className="relative flex h-20 w-20 items-center justify-center rounded-full bg-brand-400 text-ink-950 transition-transform duration-300 group-hover:scale-110">
-                      <Play className="ml-1 h-7 w-7 fill-current" />
-                    </span>
+                  <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-ink-900 transition-colors duration-300 group-hover:bg-brand-500 group-hover:text-white">
+                    <Play className="ml-1 h-6 w-6 fill-current" aria-hidden />
                   </span>
                 </div>
                 <p className="absolute bottom-5 left-6 text-left font-display text-lg font-semibold">{v.title}</p>
@@ -253,7 +250,7 @@ export function MediaSection() {
           ))}
         </div>
 
-        <div className="mt-28">
+        <div className="mt-24">
           <SlideDeck />
         </div>
       </div>

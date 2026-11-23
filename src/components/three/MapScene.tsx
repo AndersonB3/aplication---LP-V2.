@@ -121,10 +121,10 @@ function Pin({
       </mesh>
       <Html portal={portal as RefObject<HTMLElement>} position={[cidade.labelOffset ?? 0, height + 0.16, 0]} center distanceFactor={7} zIndexRange={[10, 0]}>
         <div
-          className={`whitespace-nowrap rounded-full border px-2 py-0.5 text-[9px] font-semibold sm:px-3 sm:py-1 sm:text-[11px] ${active || isSede ? "" : "max-sm:hidden"} tracking-wide backdrop-blur-md transition-all duration-300 select-none ${
+          className={`whitespace-nowrap rounded border px-2 py-0.5 text-[9px] font-semibold sm:px-3 sm:py-1 sm:text-[11px] ${active || isSede ? "" : "max-sm:hidden"} tracking-wide transition-colors duration-300 select-none ${
             active
-              ? "border-brand-300 bg-brand-400/25 text-white scale-110"
-              : "border-white/15 bg-ink-900/60 text-brand-100"
+              ? "border-brand-300 bg-ink-900 text-white"
+              : "border-white/15 bg-ink-900/80 text-slate-200"
           }`}
         >
           {cidade.nome}

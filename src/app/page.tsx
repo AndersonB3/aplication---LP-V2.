@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
-import { Marquee } from "@/components/home/Marquee";
+import { InstitutionalBar } from "@/components/home/InstitutionalBar";
 import { AboutSection } from "@/components/home/AboutSection";
 import { PillarsSection } from "@/components/home/PillarsSection";
 import { ResultsSection } from "@/components/home/ResultsSection";
@@ -50,7 +50,7 @@ export default async function Home() {
       <Header />
       <main>
         <HeroSection />
-        <Marquee />
+        <InstitutionalBar />
         <AboutSection />
         <PillarsSection />
         <ResultsSection />

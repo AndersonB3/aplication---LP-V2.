@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowUpRight, TrendingUp, Smile, Timer } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { FadeIn } from "@/components/ui/FadeIn";
@@ -29,7 +28,7 @@ function Ring({ value }: { value: number }) {
         cy="60"
         r={r}
         fill="none"
-        stroke="url(#ring)"
+        stroke="#3ec2bd"
         strokeWidth="10"
         strokeLinecap="round"
         strokeDasharray={c}
@@ -38,12 +37,6 @@ function Ring({ value }: { value: number }) {
         viewport={{ once: true }}
         transition={{ duration: 2, ease }}
       />
-      <defs>
-        <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#a2e8e4" />
-          <stop offset="100%" stopColor="#23a8a3" />
-        </linearGradient>
-      </defs>
     </svg>
   );
 }
@@ -63,10 +56,9 @@ export function ResultsSection() {
               href="https://application-relat-rio.vercel.app/"
               target="_blank"
               rel="noopener noreferrer"
-              className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-ink-900/15 px-6 py-3 text-sm font-semibold text-ink-900 transition-colors hover:border-brand-500 hover:bg-brand-50"
+              className="inline-flex shrink-0 items-center rounded-md border border-ink-900/20 px-6 py-3 text-sm font-semibold text-ink-900 transition-colors hover:border-brand-500 hover:bg-brand-50"
             >
               Relatório de atendimento
-              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </a>
           </FadeIn>
         </div>
@@ -74,12 +66,12 @@ export function ResultsSection() {
         <div className="mt-16 grid gap-5 lg:grid-cols-12">
           {/* Atendimentos */}
           <FadeIn className="lg:col-span-7">
-            <div className="relative h-full overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 sm:p-10">
-              <div className="flex items-center gap-3 text-sm font-semibold text-brand-700">
-                <TrendingUp className="h-5 w-5" /> Atendimentos · jan → set 2024
+            <div className="relative h-full overflow-hidden rounded-lg border border-slate-200 bg-white p-8 sm:p-10">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">
+                Atendimentos · janeiro a setembro de 2024
               </div>
               <div className="mt-6 flex flex-wrap items-end gap-x-6 gap-y-2">
-                <p className="font-display text-7xl font-extrabold tracking-tight text-ink-900 sm:text-8xl">
+                <p className="font-display text-6xl font-bold tracking-tight text-ink-900 sm:text-7xl">
                   +<AnimatedCounter target={41.5} decimals={1} suffix="%" />
                 </p>
                 <p className="max-w-[14rem] pb-3 text-slate-500">de aumento nos atendimentos mensais durante o período</p>
@@ -101,8 +93,8 @@ export function ResultsSection() {
                       transition={{ duration: 1.6, delay: i * 0.25, ease }}
                       className={
                         i === 0
-                          ? "rounded-t-2xl bg-slate-200"
-                          : "rounded-t-2xl bg-gradient-to-t from-brand-600 to-brand-300 shadow-[0_-20px_60px_-20px] shadow-brand-400/60"
+                          ? "rounded-t-md bg-slate-200"
+                          : "rounded-t-md bg-brand-500"
                       }
                     />
                     <p className="mt-3 text-sm font-medium text-slate-500">{b.mes}</p>
@@ -114,10 +106,9 @@ export function ResultsSection() {
 
           {/* Satisfação */}
           <FadeIn delay={0.1} className="lg:col-span-5">
-            <div className="noise relative h-full overflow-hidden rounded-[2rem] bg-ink-900 p-8 text-white sm:p-10">
-              <div aria-hidden className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-brand-500/30 blur-3xl" />
-              <div className="relative flex items-center gap-3 text-sm font-semibold text-brand-300">
-                <Smile className="h-5 w-5" /> Pesquisa de satisfação
+            <div className="relative h-full overflow-hidden rounded-lg bg-ink-900 p-8 text-white sm:p-10">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-300">
+                Pesquisa de satisfação
               </div>
               <div className="relative mt-6 flex items-center gap-6">
                 <div className="relative">
@@ -129,12 +120,12 @@ export function ResultsSection() {
                 <p className="text-slate-300">dos pacientes avaliaram o atendimento como <strong className="text-white">ótimo</strong> em outubro</p>
               </div>
               <dl className="relative mt-8 grid grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="rounded-md border border-white/15 p-4">
                   <dt className="text-xs uppercase tracking-widest text-slate-400">Fevereiro</dt>
                   <dd className="mt-1 font-display text-3xl font-bold">179</dd>
                   <dd className="text-sm text-slate-400">participantes · 91,1% ótimo</dd>
                 </div>
-                <div className="rounded-2xl border border-brand-400/30 bg-brand-400/10 p-4">
+                <div className="rounded-md border border-brand-400/40 p-4">
                   <dt className="text-xs uppercase tracking-widest text-brand-200">Outubro</dt>
                   <dd className="mt-1 font-display text-3xl font-bold">347</dd>
                   <dd className="text-sm text-brand-100/80">participantes · 337 ótimo</dd>
@@ -145,11 +136,11 @@ export function ResultsSection() {
 
           {/* Manchester */}
           <FadeIn className="lg:col-span-12">
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-8 sm:p-10">
+            <div className="rounded-lg border border-slate-200 bg-white p-8 sm:p-10">
               <div className="grid gap-10 lg:grid-cols-12">
                 <div className="lg:col-span-4">
-                  <div className="flex items-center gap-3 text-sm font-semibold text-brand-700">
-                    <Timer className="h-5 w-5" /> Tempo de espera
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">
+                    Tempo de espera
                   </div>
                   <h3 className="mt-4 font-display text-3xl font-bold tracking-tight text-ink-900">
                     Abaixo dos limites do Protocolo de Manchester
@@ -190,7 +181,7 @@ export function ResultsSection() {
                           <div className="flex items-center gap-3">
                             <div className="relative h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
                               <motion.div
-                                className="h-full rounded-full bg-gradient-to-r from-brand-600 to-brand-400"
+                                className="h-full rounded-full bg-brand-500"
                                 initial={{ width: 0 }}
                                 whileInView={{ width: `${(m.isiba / MAX) * 100}%` }}
                                 viewport={{ once: true }}

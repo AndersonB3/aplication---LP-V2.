@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, Mail } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { cn, handleAnchorClick } from "@/lib/utils";
 
 // Itens desativados no v1 a pedido do cliente (manter comentados até liberação):
@@ -58,9 +58,9 @@ export function Header() {
     >
       <nav
         className={cn(
-          "mx-auto flex max-w-7xl items-center justify-between gap-6 rounded-2xl px-4 py-2.5 transition-all duration-500 sm:px-5",
+          "mx-auto flex max-w-7xl items-center justify-between gap-6 rounded-lg px-4 py-2.5 transition-all duration-500 sm:px-5",
           scrolled || open || !isHome
-            ? "border border-white/10 bg-ink-950/70 shadow-2xl shadow-black/20 backdrop-blur-xl"
+            ? "border border-white/10 bg-ink-950/95 shadow-lg shadow-black/20"
             : "border border-transparent"
         )}
       >
@@ -73,7 +73,7 @@ export function Header() {
             <li key={l.href}>
               <a
                 {...linkProps(l.href)}
-                className="rounded-full px-3.5 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                className="rounded-md px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
               >
                 {l.label}
               </a>
@@ -86,9 +86,9 @@ export function Header() {
             href={webmail}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden items-center gap-2 rounded-full bg-brand-400 px-4 py-2 text-sm font-semibold text-ink-950 transition-colors hover:bg-brand-300 sm:inline-flex"
+            className="hidden rounded-md border border-white/30 px-4 py-2 text-sm font-semibold text-white transition-colors hover:border-white hover:bg-white/5 sm:inline-flex"
           >
-            <Mail className="h-3.5 w-3.5" /> Webmail
+            Webmail
           </a>
           <button
             type="button"
@@ -111,7 +111,7 @@ export function Header() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.25 }}
-            className="mx-auto mt-2 max-w-7xl overflow-hidden rounded-2xl border border-white/10 bg-ink-950/90 p-3 backdrop-blur-xl lg:hidden"
+            className="mx-auto mt-2 max-w-7xl overflow-hidden rounded-lg border border-white/10 bg-ink-950 p-3 lg:hidden"
           >
             <ul>
               {navLinks.map((l, i) => (
@@ -129,9 +129,9 @@ export function Header() {
               href={webmail}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-brand-400 px-4 py-3 text-sm font-semibold text-ink-950"
+              className="mt-2 flex items-center justify-center rounded-md border border-white/30 px-4 py-3 text-sm font-semibold text-white"
             >
-              <Mail className="h-4 w-4" /> Webmail
+              Webmail
             </a>
           </motion.div>
         )}

@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { Building2, MapPin } from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { LazyCanvas } from "@/components/three/LazyCanvas";
 import { cidades, totalUnidades } from "@/data/atuacao";
@@ -22,8 +21,7 @@ export function AtuacaoSection() {
   }, [hovering]);
 
   return (
-    <section id="atuacao" className="noise relative overflow-hidden bg-ink-950 py-28 text-white lg:py-36">
-      <div aria-hidden className="absolute left-1/2 top-1/2 h-[50rem] w-[50rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-600/15 blur-[140px]" />
+    <section id="atuacao" className="relative overflow-hidden bg-ink-950 py-24 text-white lg:py-32">
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
@@ -57,18 +55,13 @@ export function AtuacaoSection() {
                   onClick={() => setActive(i)}
                   aria-pressed={active === i}
                   className={cn(
-                    "w-full rounded-2xl border p-5 text-left transition-all duration-300",
-                    active === i
-                      ? "border-brand-400/50 bg-brand-400/10 shadow-[0_0_60px_-20px] shadow-brand-400/60"
-                      : "border-white/10 bg-white/[0.03] hover:border-white/20"
+                    "w-full border-l-2 py-4 pl-5 pr-2 text-left transition-colors duration-300",
+                    active === i ? "border-brand-400 bg-white/[0.04]" : "border-white/15 hover:border-white/40"
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2 font-display text-lg font-bold">
-                      <MapPin className={cn("h-4 w-4", active === i ? "text-brand-300" : "text-slate-500")} />
-                      {c.nome}
-                    </span>
-                    <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold text-brand-100">
+                    <span className="font-display text-lg font-semibold">{c.nome}</span>
+                    <span className="text-sm text-slate-400">
                       {c.unidades.length} {c.unidades.length > 1 ? "unidades" : "unidade"}
                     </span>
                   </div>
@@ -80,10 +73,7 @@ export function AtuacaoSection() {
                   >
                     <ul className="space-y-1.5 overflow-hidden text-sm text-slate-300">
                       {c.unidades.map((u) => (
-                        <li key={u} className="flex items-center gap-2">
-                          <Building2 className="h-3.5 w-3.5 shrink-0 text-brand-400" />
-                          {u}
-                        </li>
+                        <li key={u}>{u}</li>
                       ))}
                     </ul>
                   </div>
@@ -95,7 +85,7 @@ export function AtuacaoSection() {
           <div className="order-1 lg:order-2 lg:col-span-8">
             <LazyCanvas
               className="h-[22rem] w-full sm:h-[30rem] lg:h-[38rem]"
-              fallback={<div className="h-full w-full rounded-3xl bg-white/[0.02]" />}
+              fallback={<div className="h-full w-full" />}
             >
               <MapScene
                 active={active}

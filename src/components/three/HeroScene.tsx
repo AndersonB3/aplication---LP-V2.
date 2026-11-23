@@ -110,7 +110,7 @@ function OrbitRing({ radius, tilt, speed, dots }: { radius: number; tilt: [numbe
     <group rotation={tilt}>
       <mesh>
         <torusGeometry args={[radius, 0.0035, 8, 256]} />
-        <meshBasicMaterial color="#6dd7d2" transparent opacity={0.35} />
+        <meshBasicMaterial color="#6dd7d2" transparent opacity={0.22} />
       </mesh>
       <group ref={ref}>
         {Array.from({ length: dots }).map((_, i) => {
@@ -124,36 +124,6 @@ function OrbitRing({ radius, tilt, speed, dots }: { radius: number; tilt: [numbe
         })}
       </group>
     </group>
-  );
-}
-
-/** Poeira cósmica de fundo */
-function Dust({ count = 600 }) {
-  const ref = useRef<THREE.Points>(null);
-  const positions = useMemo(() => {
-    const arr = new Float32Array(count * 3);
-    // PRNG determinístico (evita Math.random no render)
-    let seed = 7;
-    const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-    for (let i = 0; i < count; i++) {
-      arr[i * 3] = (rand() - 0.5) * 16;
-      arr[i * 3 + 1] = (rand() - 0.5) * 10;
-      arr[i * 3 + 2] = (rand() - 0.5) * 10 - 3;
-    }
-    return arr;
-  }, [count]);
-
-  useFrame((state) => {
-    if (ref.current) ref.current.rotation.y = state.clock.elapsedTime * 0.01;
-  });
-
-  return (
-    <points ref={ref}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <pointsMaterial size={0.02} color="#6dd7d2" transparent opacity={0.5} depthWrite={false} />
-    </points>
   );
 }
 
@@ -214,7 +184,6 @@ export default function HeroScene() {
         <Lightformer form="ring" intensity={1.5} color="#a2e8e4" position={[4, -2, 4]} scale={3} />
       </Environment>
       <Rig />
-      <Dust />
     </Canvas>
   );
 }

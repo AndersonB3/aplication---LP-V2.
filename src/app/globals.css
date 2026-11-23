@@ -16,31 +16,21 @@
   --color-brand-800: #175756;
   --color-brand-900: #164948;
 
-  --color-ink-950: #030f12;
-  --color-ink-900: #06191d;
-  --color-ink-800: #0b252a;
-  --color-ink-700: #12343a;
+  /* Azul-petróleo institucional (sólido, sem brilhos) */
+  --color-ink-950: #0a2226;
+  --color-ink-900: #0f2d32;
+  --color-ink-800: #163b41;
+  --color-ink-700: #1f4a51;
 
   --color-graphite: #4a5556;
 
   --font-display: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
-  --animate-marquee: marquee 40s linear infinite;
-  --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
-
-  @keyframes marquee {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-  }
-  @keyframes pulse-ring {
-    0% { transform: scale(0.6); opacity: 0.9; }
-    100% { transform: scale(2.4); opacity: 0; }
-  }
 }
 
 :root {
-  --background: #f6f9f9;
+  --background: #f5f7f7;
   --foreground: #0b1f22;
 }
 
@@ -88,33 +78,6 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--color-brand-700);
   border-radius: 4px;
-}
-
-/* Texto com gradiente da marca */
-.text-gradient {
-  background: linear-gradient(100deg, #6dd7d2 0%, #3ec2bd 40%, #a2e8e4 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* Grão sutil sobre áreas escuras */
-.noise::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.05;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-}
-
-/* Linhas de grade decorativas */
-.grid-lines {
-  background-image:
-    linear-gradient(to right, rgb(62 194 189 / 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(62 194 189 / 0.07) 1px, transparent 1px);
-  background-size: 64px 64px;
 }
 
 /* Palavras do reveal de texto (GSAP) */
