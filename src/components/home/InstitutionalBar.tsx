@@ -3,7 +3,7 @@ const itens = [
   { titulo: "Utilidade Pública", texto: "Reconhecimento do Governo do Estado da Bahia" },
   { titulo: "Sem fins lucrativos", texto: "Organização social dedicada ao SUS" },
   { titulo: "Atenção integral", texto: "Primária, média e alta complexidade" },
-  { titulo: "Laboratório certificado", texto: "LAMAC afiliado ao PNCQ e à SBAC" },
+  { titulo: "Laboratórios próprios", texto: "LAMAC e AMEX, do Grupo ISIBA" },
 ];
 
 export function InstitutionalBar() {

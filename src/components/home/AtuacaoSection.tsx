@@ -31,7 +31,7 @@ export function AtuacaoSection() {
           description={
             <>
               <strong className="text-white">
-                {totalUpas} UPAs e {totalLaboratorios} laboratórios
+                {totalUpas} UPAs e {totalLaboratorios} laboratórios do Grupo ISIBA
               </strong>{" "}
               em Camaçari e Dias d&apos;Ávila, na Região Metropolitana de Salvador, levando gestão humanizada à
               população.

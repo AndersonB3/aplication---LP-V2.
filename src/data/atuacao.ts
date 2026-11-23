@@ -23,7 +23,7 @@ export const sede: Cidade = {
   labelOffset: -0.55,
 };
 
-/** Unidades sob gestão do ISIBA */
+/** UPAs sob gestão do ISIBA e laboratórios do Grupo ISIBA que atendem cada município */
 export const cidades: Cidade[] = [
   {
     nome: "Camaçari",
@@ -32,7 +32,7 @@ export const cidades: Cidade[] = [
     labelOffset: 0.55,
     unidades: [
       { nome: "UPA Gleba A", tipo: "upa" },
-      { nome: "Laboratório AMEX (na UPA Gleba A)", tipo: "laboratorio" },
+      { nome: "Laboratório AMEX, do Grupo ISIBA (na UPA Gleba A)", tipo: "laboratorio" },
     ],
   },
   {
@@ -42,7 +42,7 @@ export const cidades: Cidade[] = [
     labelOffset: -0.5,
     unidades: [
       { nome: "UPA Lucas Evangelista", tipo: "upa" },
-      { nome: "Laboratório LAMAC", tipo: "laboratorio" },
+      { nome: "Laboratório LAMAC, do Grupo ISIBA", tipo: "laboratorio" },
     ],
   },
 ];

@@ -5,11 +5,11 @@ import { FadeIn } from "@/components/ui/FadeIn";
 const destaques = [
   {
     area: "Medicina diagnóstica",
-    titulo: "Laboratório LAMAC",
+    titulo: "Laboratórios LAMAC e AMEX",
     texto:
-      "Laboratório próprio de análises clínicas e citopatologia, com equipe qualificada e equipamentos de última geração. Afiliado ao PNCQ e à SBAC, foi reconhecido por seis anos consecutivos como laboratório de excelência pelos órgãos de controle.",
+      "Laboratórios de análises clínicas do Grupo ISIBA: o LAMAC, em Dias d'Ávila, e o AMEX, em Camaçari. O LAMAC é afiliado ao PNCQ e à SBAC e foi reconhecido por seis anos consecutivos como laboratório de excelência pelos órgãos de controle.",
     img: "/v2/lab.webp",
-    alt: "Profissionais do laboratório LAMAC",
+    alt: "Profissionais de laboratório de análises clínicas",
   },
   {
     area: "Controle rigoroso",

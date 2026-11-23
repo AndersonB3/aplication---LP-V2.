@@ -15,7 +15,7 @@ const ease = [0.22, 1, 0.36, 1] as const;
 const destaques = [
   { valor: "2006", rotulo: "Ano de fundação" },
   { valor: `${totalUpas}`, rotulo: "UPAs sob gestão" },
-  { valor: `${totalLaboratorios}`, rotulo: "Laboratórios" },
+  { valor: `${totalLaboratorios}`, rotulo: "Laboratórios do grupo" },
   { valor: "97,1%", rotulo: "Avaliações “ótimo”*" },
 ];
 
@@ -77,7 +77,7 @@ export function HeroSection() {
             className="mt-6 max-w-xl text-lg leading-relaxed text-slate-300"
           >
             Organização sem fins lucrativos que, desde 2006, fortalece o Sistema Único de Saúde com a gestão
-            de UPAs e laboratórios públicos, pautada pela eficiência, pela transparência e pelo cuidado humanizado.
+            de UPAs e com laboratórios próprios, pautada pela eficiência, pela transparência e pelo cuidado humanizado.
           </motion.p>
 
           <motion.div
