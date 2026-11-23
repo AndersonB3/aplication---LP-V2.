@@ -1,21 +1,21 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useRef } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Float, Lightformer, useTexture } from "@react-three/drei";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import { Environment, Float, Lightformer } from "@react-three/drei";
 import * as THREE from "three";
 
 /* ------------------------------------------------------------------
    Símbolo ISIBA em 3D.
-   Forma: as 4 faixas do ícone oficial (public/v2/logo/band*.png) projetadas
-   sobre uma esfera — de frente, o globo reproduz o logo.
+   Forma: as 4 faixas do ícone oficial, vetorizadas e trianguladas
+   (public/v2/logo/bands.json), viram sólidos curvos sobre uma esfera —
+   de frente, o globo reproduz o logo.
    Vida: núcleo luminoso, material com verniz, rede de pontos, anéis
    orbitais e cada faixa "respirando" no próprio ritmo.
 ------------------------------------------------------------------- */
 
-const BANDS = [0, 1, 2, 3];
-const LAYERS = 10; // cascas empilhadas que dão espessura às fitas
-const THICKNESS = 0.06;
+const R_OUT = 1;
+const R_IN = 0.92; // espessura das fitas
 
 // Montagem inicial: de onde cada faixa parte (rotação em x, y, z)
 const START: [number, number, number][] = [
@@ -27,68 +27,119 @@ const START: [number, number, number][] = [
 const ASSEMBLY = 1.8; // duração da montagem (s)
 const STAGGER = 0.16;
 
-/**
- * Esfera com UV planar (projeção frontal). Cobre o hemisfério frontal e um
- * pouco além das laterais: os vãos do logo ficam abertos (mostrando o núcleo)
- * e as faixas "dobram" pelas bordas quando o globo gira.
- */
-function projectedSphere(w: number, h: number) {
-  const wrap = 0.35;
-  const g = new THREE.SphereGeometry(1, w, h, -wrap, Math.PI + wrap * 2);
-  const pos = g.attributes.position;
-  const uv = g.attributes.uv;
-  for (let i = 0; i < pos.count; i++) {
-    uv.setXY(i, pos.getX(i) * 0.5 + 0.5, pos.getY(i) * 0.5 + 0.5);
+type BandData = { color: string; loop: number; pts: number[]; tris: number[] };
+
+/** Ponto do plano do logo (x,y em [-1,1]) levado à superfície da esfera unitária */
+function toSphere(x: number, y: number): THREE.Vector3 {
+  const r2 = x * x + y * y;
+  const max = 0.995;
+  if (r2 > max) {
+    const k = Math.sqrt(max / r2);
+    x *= k;
+    y *= k;
   }
-  uv.needsUpdate = true;
+  return new THREE.Vector3(x, y, Math.sqrt(Math.max(0, 1 - x * x - y * y)));
+}
+
+/**
+ * Sólido de uma faixa: face frontal curva (raio R_OUT), face interna (R_IN)
+ * e paredes laterais ao longo do contorno, com normais suaves.
+ * Grupos de material: 0 = frente, 1 = face interna, 2 = paredes.
+ */
+function buildBand(d: BandData) {
+  const n = d.pts.length / 2;
+  const L = d.loop;
+  const unit: THREE.Vector3[] = [];
+  for (let i = 0; i < n; i++) unit.push(toSphere(d.pts[i * 2], d.pts[i * 2 + 1]));
+
+  const pos: number[] = [];
+  const nor: number[] = [];
+  const idx: number[] = [];
+  const push = (v: THREE.Vector3, nv: THREE.Vector3) => {
+    pos.push(v.x, v.y, v.z);
+    nor.push(nv.x, nv.y, nv.z);
+    return pos.length / 3 - 1;
+  };
+
+  // Faces frontal e interna
+  const front = unit.map((u) => push(u.clone().multiplyScalar(R_OUT), u));
+  const back = unit.map((u) => push(u.clone().multiplyScalar(R_IN), u.clone().negate()));
+  const frontIdx: number[] = [];
+  const backIdx: number[] = [];
+  for (let t = 0; t < d.tris.length; t += 3) {
+    const a = d.tris[t];
+    let b = d.tris[t + 1];
+    let c = d.tris[t + 2];
+    const ax = d.pts[a * 2], ay = d.pts[a * 2 + 1];
+    const area = (d.pts[b * 2] - ax) * (d.pts[c * 2 + 1] - ay) - (d.pts[c * 2] - ax) * (d.pts[b * 2 + 1] - ay);
+    if (area < 0) [b, c] = [c, b]; // garante sentido anti-horário (voltado para fora)
+    frontIdx.push(front[a], front[b], front[c]);
+    backIdx.push(back[a], back[c], back[b]);
+  }
+
+  // Paredes: normal para fora, média das arestas vizinhas (borda arredondada)
+  const wallIdx: number[] = [];
+  const outward: THREE.Vector3[] = [];
+  for (let i = 0; i < L; i++) {
+    const prev = unit[(i - 1 + L) % L];
+    const next = unit[(i + 1) % L];
+    const e = next.clone().sub(prev);
+    outward.push(e.clone().cross(unit[i]).normalize());
+  }
+  const wf: number[] = [];
+  const wb: number[] = [];
+  for (let i = 0; i < L; i++) {
+    wf.push(push(unit[i].clone().multiplyScalar(R_OUT), outward[i]));
+    wb.push(push(unit[i].clone().multiplyScalar(R_IN), outward[i]));
+  }
+  for (let i = 0; i < L; i++) {
+    const j = (i + 1) % L;
+    wallIdx.push(wf[i], wb[i], wf[j], wf[j], wb[i], wb[j]);
+  }
+
+  idx.push(...frontIdx, ...backIdx, ...wallIdx);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  g.setIndex(idx);
+  g.addGroup(0, frontIdx.length, 0);
+  g.addGroup(frontIdx.length, backIdx.length, 1);
+  g.addGroup(frontIdx.length + backIdx.length, wallIdx.length, 2);
+  g.computeBoundingSphere();
   return g;
 }
 
 const easeOut = (t: number) => 1 - Math.pow(1 - Math.min(Math.max(t, 0), 1), 3);
 
-function Band({
-  index,
-  geometry,
-  colorMap,
-  alphaMap,
-  startAt,
-}: {
-  index: number;
-  geometry: { outer: THREE.SphereGeometry; inner: THREE.SphereGeometry };
-  colorMap: THREE.Texture;
-  alphaMap: THREE.Texture;
-  startAt: React.RefObject<number | null>;
-}) {
+function Band({ index, data, startAt }: { index: number; data: BandData; startAt: React.RefObject<number | null> }) {
   const ref = useRef<THREE.Group>(null);
+  const geometry = useMemo(() => buildBand(data), [data]);
 
-  const materials = useMemo(
-    () =>
-      Array.from({ length: LAYERS }, (_, l) => {
-        const outer = l === 0;
-        return outer
-          ? new THREE.MeshPhysicalMaterial({
-              map: colorMap,
-              color: "#c9fbf8", // clareia o teal do logo para o verniz brilhar
-              alphaMap,
-              alphaTest: 0.5,
-              side: THREE.DoubleSide,
-              roughness: 0.2,
-              metalness: 0.15,
-              clearcoat: 1,
-              clearcoatRoughness: 0.12,
-            })
-          : new THREE.MeshStandardMaterial({
-              color: "#13605e",
-              alphaMap,
-              alphaTest: 0.5,
-              side: THREE.DoubleSide,
-              roughness: 0.55,
-            });
-      }),
-    [colorMap, alphaMap]
+  const materials = useMemo(() => {
+    const base = new THREE.Color(data.color);
+    const face = new THREE.MeshPhysicalMaterial({
+      color: base.clone().offsetHSL(0, 0.04, 0.05),
+      roughness: 0.22,
+      metalness: 0.12,
+      clearcoat: 1,
+      clearcoatRoughness: 0.1,
+    });
+    const inner = new THREE.MeshStandardMaterial({ color: base.clone().offsetHSL(0, -0.05, -0.1), roughness: 0.5 });
+    const wall = new THREE.MeshPhysicalMaterial({
+      color: base.clone().offsetHSL(0, 0, 0.1),
+      roughness: 0.3,
+      clearcoat: 0.6,
+    });
+    return [face, inner, wall];
+  }, [data.color]);
+
+  useEffect(
+    () => () => {
+      geometry.dispose();
+      materials.forEach((m) => m.dispose());
+    },
+    [geometry, materials]
   );
-
-  useEffect(() => () => materials.forEach((m) => m.dispose()), [materials]);
 
   useFrame((state) => {
     const g = ref.current;
@@ -110,29 +161,14 @@ function Band({
 
   return (
     <group ref={ref}>
-      {materials.map((m, l) => (
-        <mesh
-          key={l}
-          geometry={l === 0 ? geometry.outer : geometry.inner}
-          material={m}
-          scale={1 - (l * THICKNESS) / (LAYERS - 1)}
-        />
-      ))}
+      <mesh geometry={geometry} material={materials} />
     </group>
   );
 }
 
 function LogoGlobe() {
-  const geometry = useMemo(() => ({ outer: projectedSphere(144, 108), inner: projectedSphere(80, 60) }), []);
-  const [color, b0, b1, b2, b3] = useTexture(
-    ["/v2/logo/color.webp", "/v2/logo/band0.png", "/v2/logo/band1.png", "/v2/logo/band2.png", "/v2/logo/band3.png"],
-    (tex) => {
-      const [c] = tex as THREE.Texture[];
-      c.colorSpace = THREE.SRGBColorSpace;
-      c.anisotropy = 8;
-    }
-  );
-  const masks = [b0, b1, b2, b3];
+  const raw = useLoader(THREE.FileLoader, "/v2/logo/bands.json") as string;
+  const bands = useMemo(() => (JSON.parse(raw) as { bands: BandData[] }).bands, [raw]);
 
   // Início da montagem (null = já montado, para quem prefere menos movimento)
   const startAt = useRef<number | null>(null);
@@ -145,8 +181,8 @@ function LogoGlobe() {
 
   return (
     <group>
-      {BANDS.map((i) => (
-        <Band key={i} index={i} geometry={geometry} colorMap={color} alphaMap={masks[i]} startAt={startAt} />
+      {bands.map((b, i) => (
+        <Band key={i} index={i} data={b} startAt={startAt} />
       ))}
       {/* Núcleo luminoso, visto pelos vãos do símbolo */}
       <mesh>
