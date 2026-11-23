@@ -24,6 +24,15 @@ const START: [number, number, number][] = [
   [0.6, 2.9, -0.5],
   [-0.9, -2.2, 0.4],
 ];
+/**
+ * A 3ª faixa do logo é a continuação da 2ª: a fita larga dá a volta pela
+ * lateral direita e segue por TRÁS do globo — por isso no logo ela aparece
+ * em outro tom (é a face interna da fita). Fica no hemisfério de trás e se
+ * move junto com a 2ª.
+ */
+const BACK_BAND = 2;
+const LINKED_TO: Record<number, number> = { [BACK_BAND]: 1 };
+
 const ASSEMBLY = 1.8; // duração da montagem (s)
 const STAGGER = 0.16;
 
@@ -46,7 +55,7 @@ function toSphere(x: number, y: number): THREE.Vector3 {
  * e paredes laterais ao longo do contorno, com normais suaves.
  * Grupos de material: 0 = frente, 1 = face interna, 2 = paredes.
  */
-function buildBand(d: BandData) {
+function buildBand(d: BandData, onBack = false) {
   const n = d.pts.length / 2;
   const L = d.loop;
   const unit: THREE.Vector3[] = [];
@@ -105,6 +114,17 @@ function buildBand(d: BandData) {
   g.addGroup(0, frontIdx.length, 0);
   g.addGroup(frontIdx.length, backIdx.length, 1);
   g.addGroup(frontIdx.length + backIdx.length, wallIdx.length, 2);
+  if (onBack) {
+    // Espelha para o hemisfério de trás e corrige o sentido dos triângulos
+    g.scale(1, 1, -1);
+    const ix = g.getIndex()!;
+    for (let i = 0; i < ix.count; i += 3) {
+      const b = ix.getX(i + 1);
+      ix.setX(i + 1, ix.getX(i + 2));
+      ix.setX(i + 2, b);
+    }
+    ix.needsUpdate = true;
+  }
   g.computeBoundingSphere();
   return g;
 }
@@ -113,7 +133,8 @@ const easeOut = (t: number) => 1 - Math.pow(1 - Math.min(Math.max(t, 0), 1), 3);
 
 function Band({ index, data, startAt }: { index: number; data: BandData; startAt: React.RefObject<number | null> }) {
   const ref = useRef<THREE.Group>(null);
-  const geometry = useMemo(() => buildBand(data), [data]);
+  const isBack = index === BACK_BAND;
+  const geometry = useMemo(() => buildBand(data, isBack), [data, isBack]);
 
   const materials = useMemo(() => {
     const base = new THREE.Color(data.color);
@@ -130,8 +151,22 @@ function Band({ index, data, startAt }: { index: number; data: BandData; startAt
       roughness: 0.3,
       clearcoat: 0.6,
     });
+    // Na faixa de trás, quem aparece para a câmera é a face interna (côncava):
+    // ela recebe o acabamento claro; a face externa fica voltada para trás.
+    if (isBack) {
+      // Face interna da fita: teal um pouco mais claro que a 2ª faixa, acetinado
+      const concave = new THREE.MeshPhysicalMaterial({
+        color: base.clone().offsetHSL(0, 0.02, 0.02),
+        roughness: 0.38,
+        metalness: 0.05,
+        clearcoat: 0.35,
+        clearcoatRoughness: 0.3,
+      });
+      face.dispose();
+      return [inner, concave, wall];
+    }
     return [face, inner, wall];
-  }, [data.color]);
+  }, [data.color, isBack]);
 
   useEffect(
     () => () => {
@@ -147,14 +182,15 @@ function Band({ index, data, startAt }: { index: number; data: BandData; startAt
     const t = state.clock.elapsedTime;
 
     // "Respiração" própria de cada faixa (sempre volta ao desenho do logo)
-    const breatheY = Math.sin(t * 0.45 + index * 1.3) * 0.11;
-    const breatheX = Math.sin(t * 0.33 + index * 0.9) * 0.04;
+    const phase = LINKED_TO[index] ?? index; // a faixa de trás acompanha a 2ª
+    const breatheY = Math.sin(t * 0.45 + phase * 1.3) * 0.11;
+    const breatheX = Math.sin(t * 0.33 + phase * 0.9) * 0.04;
 
     let k = 1;
     if (startAt.current !== null) {
-      k = easeOut((t - startAt.current - index * STAGGER) / ASSEMBLY);
+      k = easeOut((t - startAt.current - phase * STAGGER) / ASSEMBLY);
     }
-    const [sx, sy, sz] = START[index];
+    const [sx, sy, sz] = START[phase];
     g.rotation.set(sx * (1 - k) + breatheX * k, sy * (1 - k) + breatheY * k, sz * (1 - k));
     g.scale.setScalar(0.9 + 0.1 * k);
   });
@@ -184,12 +220,8 @@ function LogoGlobe() {
       {bands.map((b, i) => (
         <Band key={i} index={i} data={b} startAt={startAt} />
       ))}
-      {/* Núcleo luminoso, visto pelos vãos do símbolo */}
-      <mesh>
-        <sphereGeometry args={[0.62, 48, 48]} />
-        <meshStandardMaterial color="#0b3b3c" emissive="#23a8a3" emissiveIntensity={1.5} roughness={0.4} />
-      </mesh>
-      <pointLight color="#6dd7d2" intensity={5} distance={3.5} />
+      {/* Luz interna: ilumina a face interna da fita de trás */}
+      <pointLight color="#6dd7d2" intensity={1.6} distance={3} />
     </group>
   );
 }
