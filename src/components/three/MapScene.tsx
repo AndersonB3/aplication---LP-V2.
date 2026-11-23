@@ -1,173 +1,370 @@
 "use client";
 
-import { useMemo, useRef, type RefObject } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Html, Line } from "@react-three/drei";
+import { Suspense, useEffect, useMemo, useRef, type RefObject } from "react";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import { Html } from "@react-three/drei";
 import * as THREE from "three";
-import { cidades, sede, type Cidade } from "@/data/atuacao";
+import { cidades, sede, type Unidade } from "@/data/atuacao";
 
-// Enquadra Salvador (sede), Camaçari e Dias d'Ávila
-const CENTER = { lat: -12.77, lon: -38.4 };
-const K = 7;
+/* ------------------------------------------------------------------
+   Maquete 3D da Região Metropolitana de Salvador.
+   Divisas municipais: IBGE (malhas, qualidade máxima), recortadas pelo
+   litoral do OpenStreetMap (© OpenStreetMap contributors, ODbL) —
+   arquivo gerado em public/v2/map/rms.json.
+------------------------------------------------------------------- */
 
-function project(lat: number, lon: number): [number, number, number] {
-  return [(lon - CENTER.lon) * K, 0, -(lat - CENTER.lat) * K];
-}
+type Ring = [number, number][];
+type MapData = {
+  lon0: number;
+  lat0: number;
+  k: number;
+  cos: number;
+  municipios: { nome: string; isiba: boolean; polys: { ext: Ring; holes: Ring[] }[] }[];
+};
 
-/** Malha de pontos que "acende" perto das unidades */
-function DotField() {
-  const { positions, colors } = useMemo(() => {
-    const pts: number[] = [];
-    const cols: number[] = [];
-    const hot = [sede, ...cidades].map((c) => project(c.lat, c.lon));
-    const base = new THREE.Color("#1a8784");
-    const glow = new THREE.Color("#a2e8e4");
-    const step = 0.16;
-    for (let x = -3.6; x <= 3.6; x += step) {
-      for (let z = -2.4; z <= 2.4; z += step) {
-        const edge = 1 - Math.min(1, Math.hypot(x / 3.7, z / 2.5));
-        if (edge <= 0.02) continue;
-        let heat = 0;
-        for (const h of hot) heat = Math.max(heat, 1 - Math.min(1, Math.hypot(x - h[0], z - h[2]) / 0.9));
-        pts.push(x, 0, z);
-        const c = base.clone().lerp(glow, heat * 0.85).multiplyScalar(0.35 + edge * 0.9);
-        cols.push(c.r, c.g, c.b);
-      }
-    }
-    return { positions: new Float32Array(pts), colors: new Float32Array(cols) };
-  }, []);
+const H_ISIBA = 0.16; // altura das placas dos municípios com unidades
+const H_OTHER = 0.05;
+const ease = (t: number) => 1 - Math.pow(1 - Math.min(Math.max(t, 0), 1), 3);
 
-  return (
-    <points>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
-      </bufferGeometry>
-      <pointsMaterial size={0.035} vertexColors transparent opacity={0.9} depthWrite={false} />
-    </points>
+/** lat/lon → coordenadas da cena (x = leste, z = sul) */
+function useProject(data: MapData) {
+  return useMemo(
+    () => (lat: number, lon: number, y = 0) =>
+      new THREE.Vector3((lon - data.lon0) * data.cos * data.k, y, -(lat - data.lat0) * data.k),
+    [data]
   );
 }
 
-function Arc({ to, active }: { to: [number, number, number]; active: boolean }) {
-  const ref = useRef<{ material: { dashOffset: number } } | null>(null);
-  const from = project(sede.lat, sede.lon);
-  const points = useMemo(() => {
-    const mid = new THREE.Vector3((from[0] + to[0]) / 2, 0.25 + Math.hypot(from[0] - to[0], from[2] - to[2]) * 0.35, (from[2] + to[2]) / 2);
-    return new THREE.QuadraticBezierCurve3(new THREE.Vector3(...from), mid, new THREE.Vector3(...to)).getPoints(48);
-  }, [from, to]);
+/* ---------------- Relevo dos municípios ---------------- */
 
-  useFrame((_, delta) => {
-    if (ref.current) ref.current.material.dashOffset -= delta * 0.6;
+function Municipios({ data }: { data: MapData }) {
+  const items = useMemo(() => {
+    return data.municipios.flatMap((m) =>
+      m.polys.map((p, i) => {
+        const shape = new THREE.Shape(p.ext.map(([x, y]) => new THREE.Vector2(x, y)));
+        shape.holes = p.holes.map((h) => new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x, y))));
+        const depth = m.isiba ? H_ISIBA : H_OTHER;
+        const geo = new THREE.ExtrudeGeometry(shape, {
+          depth,
+          bevelEnabled: true,
+          bevelThickness: 0.012,
+          bevelSize: 0.012,
+          bevelSegments: 2,
+          curveSegments: 1,
+        });
+        geo.rotateX(-Math.PI / 2); // plano XY → chão XZ (y vira -z = norte)
+        // Contorno no topo (divisa)
+        const border = new THREE.BufferGeometry().setFromPoints(
+          [...p.ext, p.ext[0]].map(([x, y]) => new THREE.Vector3(x, depth + 0.014, -y))
+        );
+        return { key: `${m.nome}-${i}`, geo, border, isiba: m.isiba };
+      })
+    );
+  }, [data]);
+
+  useEffect(
+    () => () =>
+      items.forEach((it) => {
+        it.geo.dispose();
+        it.border.dispose();
+      }),
+    [items]
+  );
+
+  const matIsiba = useMemo(() => new THREE.MeshStandardMaterial({ color: "#1f9b96", roughness: 0.45, metalness: 0.1 }), []);
+  const matOther = useMemo(() => new THREE.MeshStandardMaterial({ color: "#1d3c42", roughness: 0.85 }), []);
+  const lineIsiba = useMemo(() => new THREE.LineBasicMaterial({ color: "#a2e8e4", transparent: true, opacity: 0.85 }), []);
+  const lineOther = useMemo(() => new THREE.LineBasicMaterial({ color: "#4d7a80", transparent: true, opacity: 0.5 }), []);
+
+  return (
+    <group>
+      {items.map((it) => (
+        <group key={it.key}>
+          <mesh geometry={it.geo} material={it.isiba ? matIsiba : matOther} />
+          <lineSegments geometry={it.border} material={it.isiba ? lineIsiba : lineOther} />
+        </group>
+      ))}
+    </group>
+  );
+}
+
+/** Mar com leve brilho e ondulação */
+function Water() {
+  const ref = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame((state) => {
+    if (ref.current) ref.current.emissiveIntensity = 0.16 + Math.sin(state.clock.elapsedTime * 0.8) * 0.03;
+  });
+  return (
+    <mesh rotation-x={-Math.PI / 2} position-y={-0.01}>
+      <planeGeometry args={[40, 40]} />
+      <meshStandardMaterial ref={ref} color="#0b2a30" emissive="#0f4a4c" roughness={0.25} metalness={0.4} />
+    </mesh>
+  );
+}
+
+/* ---------------- Unidades ---------------- */
+
+function Building({ tipo, active }: { tipo: Unidade["tipo"]; active: boolean }) {
+  const ring = useRef<THREE.Mesh>(null);
+  useFrame((state) => {
+    if (!ring.current) return;
+    const t = (state.clock.elapsedTime * 0.7) % 1;
+    ring.current.scale.setScalar(0.6 + t * (active ? 3 : 1.8));
+    (ring.current.material as THREE.MeshBasicMaterial).opacity = (1 - t) * (active ? 0.9 : 0.45);
   });
 
+  const glow = active ? 1.4 : 0.6;
   return (
-    <Line
-      // @ts-expect-error -- o ref do Line2 expõe o material com dashOffset
-      ref={ref}
-      points={points}
-      color={active ? "#cff4f2" : "#3ec2bd"}
-      lineWidth={active ? 2.2 : 1.2}
-      dashed
-      dashSize={0.12}
-      gapSize={0.08}
-      transparent
-      opacity={active ? 1 : 0.55}
-    />
+    <group>
+      <mesh ref={ring} rotation-x={-Math.PI / 2} position-y={0.005}>
+        <ringGeometry args={[0.1, 0.12, 48]} />
+        <meshBasicMaterial color={tipo === "sede" ? "#ffffff" : "#6dd7d2"} transparent depthWrite={false} />
+      </mesh>
+      <group>
+        {tipo === "upa" && (
+          <>
+            <mesh position-y={0.11}>
+              <boxGeometry args={[0.2, 0.22, 0.2]} />
+              <meshStandardMaterial color="#f2fbfa" emissive="#6dd7d2" emissiveIntensity={glow * 0.25} roughness={0.4} />
+            </mesh>
+            {/* cruz no telhado */}
+            <mesh position-y={0.228}>
+              <boxGeometry args={[0.14, 0.012, 0.04]} />
+              <meshStandardMaterial color="#23a8a3" emissive="#3ec2bd" emissiveIntensity={glow} />
+            </mesh>
+            <mesh position-y={0.228}>
+              <boxGeometry args={[0.04, 0.012, 0.14]} />
+              <meshStandardMaterial color="#23a8a3" emissive="#3ec2bd" emissiveIntensity={glow} />
+            </mesh>
+          </>
+        )}
+        {tipo === "laboratorio" && (
+          <>
+            <mesh position-y={0.09}>
+              <cylinderGeometry args={[0.08, 0.08, 0.18, 32]} />
+              <meshStandardMaterial color="#cff4f2" emissive="#6dd7d2" emissiveIntensity={glow * 0.3} roughness={0.3} />
+            </mesh>
+            <mesh position-y={0.19}>
+              <cylinderGeometry args={[0.03, 0.05, 0.05, 24]} />
+              <meshStandardMaterial color="#3ec2bd" emissive="#3ec2bd" emissiveIntensity={glow} />
+            </mesh>
+          </>
+        )}
+        {tipo === "sede" && (
+          <>
+            <mesh position-y={0.24}>
+              <boxGeometry args={[0.14, 0.48, 0.14]} />
+              <meshStandardMaterial color="#ffffff" emissive="#a2e8e4" emissiveIntensity={0.35} roughness={0.35} />
+            </mesh>
+            <mesh position-y={0.5}>
+              <boxGeometry args={[0.16, 0.03, 0.16]} />
+              <meshStandardMaterial color="#3ec2bd" emissive="#3ec2bd" emissiveIntensity={1.2} />
+            </mesh>
+          </>
+        )}
+      </group>
+    </group>
   );
 }
 
-function Pin({
-  cidade,
-  active,
-  isSede,
-  onHover,
-  portal,
-}: {
-  cidade: Cidade;
-  active: boolean;
-  isSede?: boolean;
-  onHover?: () => void;
-  portal: RefObject<HTMLDivElement | null>;
-}) {
-  const ring = useRef<THREE.Mesh>(null);
-  const head = useRef<THREE.Mesh>(null);
-  const pos = project(cidade.lat, cidade.lon);
-  const height = isSede ? 0.75 : 0.35 + cidade.unidades.length * 0.08;
+/** Arco de luz da sede até a cidade, com partículas percorrendo o caminho */
+function Flow({ from, to, active }: { from: THREE.Vector3; to: THREE.Vector3; active: boolean }) {
+  const curve = useMemo(() => {
+    const mid = from.clone().lerp(to, 0.5);
+    mid.y = 0.6 + from.distanceTo(to) * 0.25;
+    return new THREE.QuadraticBezierCurve3(from, mid, to);
+  }, [from, to]);
+  const tube = useMemo(() => new THREE.TubeGeometry(curve, 64, 0.008, 6, false), [curve]);
+  useEffect(() => () => tube.dispose(), [tube]);
+  const dots = useRef<(THREE.Mesh | null)[]>([]);
 
   useFrame((state) => {
-    const t = (state.clock.elapsedTime * 0.6 + pos[0]) % 1;
-    if (ring.current) {
-      ring.current.scale.setScalar(0.4 + t * (active ? 2.6 : 1.6));
-      (ring.current.material as THREE.MeshBasicMaterial).opacity = (1 - t) * (active ? 0.9 : 0.5);
-    }
-    if (head.current) {
-      const s = THREE.MathUtils.lerp(head.current.scale.x, active ? 1.6 : 1, 0.12);
-      head.current.scale.setScalar(s);
-    }
+    const t = state.clock.elapsedTime;
+    dots.current.forEach((m, i) => {
+      if (!m) return;
+      m.position.copy(curve.getPoint((t * 0.22 + i / 4) % 1));
+    });
   });
 
   return (
-    <group position={pos} onPointerOver={onHover}>
-      <mesh ref={ring} rotation-x={-Math.PI / 2}>
-        <ringGeometry args={[0.09, 0.11, 48]} />
-        <meshBasicMaterial color={isSede ? "#ffffff" : "#6dd7d2"} transparent />
+    <group>
+      <mesh geometry={tube}>
+        <meshBasicMaterial color={active ? "#cff4f2" : "#3ec2bd"} transparent opacity={active ? 0.9 : 0.45} />
       </mesh>
-      <mesh position-y={height / 2}>
-        <cylinderGeometry args={[0.008, 0.008, height, 8]} />
-        <meshBasicMaterial color="#a2e8e4" transparent opacity={0.7} />
-      </mesh>
-      <mesh ref={head} position-y={height}>
-        <sphereGeometry args={[isSede ? 0.065 : 0.05, 24, 24]} />
-        <meshStandardMaterial color={isSede ? "#ffffff" : "#6dd7d2"} emissive={isSede ? "#ffffff" : "#3ec2bd"} emissiveIntensity={active ? 2.5 : 1.2} />
-      </mesh>
-      <Html portal={portal as RefObject<HTMLElement>} position={[cidade.labelOffset ?? 0, height + 0.16, 0]} center distanceFactor={7} zIndexRange={[10, 0]}>
-        <div
-          className={`whitespace-nowrap rounded border px-2 py-0.5 text-[9px] font-semibold sm:px-3 sm:py-1 sm:text-[11px] ${active || isSede ? "" : "max-sm:hidden"} tracking-wide transition-colors duration-300 select-none ${
-            active
-              ? "border-brand-300 bg-ink-900 text-white"
-              : "border-white/15 bg-ink-900/80 text-slate-200"
-          }`}
-        >
-          {cidade.nome}
-        </div>
-      </Html>
+      {[0, 1, 2, 3].map((i) => (
+        <mesh key={i} ref={(m) => void (dots.current[i] = m)}>
+          <sphereGeometry args={[active ? 0.03 : 0.022, 12, 12]} />
+          <meshBasicMaterial color="#e6fffd" />
+        </mesh>
+      ))}
     </group>
   );
 }
 
-function Scene({ active, onHover, portal }: { active: number; onHover: (i: number) => void; portal: RefObject<HTMLDivElement | null> }) {
-  const group = useRef<THREE.Group>(null);
+function Label({ text, strong, portal }: { text: string; strong?: boolean; portal: RefObject<HTMLDivElement | null> }) {
+  return (
+    <Html portal={portal as RefObject<HTMLElement>} center zIndexRange={[10, 0]}>
+      <div
+        className={`select-none whitespace-nowrap rounded border px-2 py-0.5 text-[11px] font-semibold tracking-wide transition-colors sm:px-2.5 sm:text-xs ${
+          strong ? "border-brand-300 bg-ink-900 text-white" : "border-white/15 bg-ink-900/85 text-slate-200"
+        }`}
+      >
+        {text}
+      </div>
+    </Html>
+  );
+}
+
+/* ---------------- Câmera ---------------- */
+
+const HOME_TARGET = new THREE.Vector3(0.55, 0, -0.35);
+const HOME_POS = new THREE.Vector3(0.6, 6.4, 6.9);
+
+function CameraRig({ focus, introRef }: { focus: THREE.Vector3 | null; introRef: RefObject<number | null> }) {
+  const get = useThree((s) => s.get);
+  const target = useRef(HOME_TARGET.clone());
+
+  useEffect(() => {
+    const { camera, clock } = get();
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      camera.position.copy(HOME_POS);
+      return;
+    }
+    // Começa no alto, como um drone, e desce até a vista em perspectiva
+    camera.position.set(HOME_POS.x, 13, 1.2);
+    introRef.current = clock.elapsedTime;
+  }, [get, introRef]);
+
   useFrame((state, delta) => {
-    if (!group.current) return;
-    group.current.rotation.y = THREE.MathUtils.damp(group.current.rotation.y, state.pointer.x * 0.18, 2.5, delta);
-    group.current.rotation.x = THREE.MathUtils.damp(group.current.rotation.x, -state.pointer.y * 0.06, 2.5, delta);
+    const wantTarget = focus ?? HOME_TARGET;
+    const wantPos = focus ? focus.clone().add(new THREE.Vector3(0.25, 3.4, 3.9)) : HOME_POS.clone();
+    // leve órbita com o ponteiro
+    wantPos.x += state.pointer.x * 0.5;
+    wantPos.y += state.pointer.y * 0.25;
+
+    const introK = introRef.current === null ? 1 : ease((state.clock.elapsedTime - introRef.current) / 2.6);
+    const speed = introK < 1 ? 1.6 + introK * 2 : 2.4;
+    const cam = state.camera;
+    cam.position.x = THREE.MathUtils.damp(cam.position.x, wantPos.x, speed, delta);
+    cam.position.y = THREE.MathUtils.damp(cam.position.y, wantPos.y, speed, delta);
+    cam.position.z = THREE.MathUtils.damp(cam.position.z, wantPos.z, speed, delta);
+    target.current.lerp(wantTarget, 1 - Math.exp(-speed * delta));
+    cam.lookAt(target.current);
+  });
+  return null;
+}
+
+/* ---------------- Cena ---------------- */
+
+function Scene({
+  active,
+  focus,
+  onSelect,
+  portal,
+}: {
+  active: number;
+  focus: number | null;
+  onSelect: (i: number) => void;
+  portal: RefObject<HTMLDivElement | null>;
+}) {
+  const raw = useLoader(THREE.FileLoader, "/v2/map/rms.json") as string;
+  const data = useMemo(() => JSON.parse(raw) as MapData, [raw]);
+  const project = useProject(data);
+  const introRef = useRef<number | null>(null);
+  const { clock } = useThree();
+  const born = useRef(clock.elapsedTime);
+
+  const sedePos = useMemo(() => project(sede.lat, sede.lon, H_ISIBA + 0.02), [project]);
+  const cityData = useMemo(
+    () =>
+      cidades.map((c) => {
+        const units = c.unidades.map((u) => ({ u, pos: project(u.lat, u.lon, H_ISIBA + 0.02) }));
+        const center = units.reduce((acc, x) => acc.add(x.pos), new THREE.Vector3()).divideScalar(units.length);
+        return { cidade: c, units, center };
+      }),
+    [project]
+  );
+
+  const focusPos = focus === null ? null : cityData[focus].center.clone().setY(0);
+
+  // Crescimento dos prédios após a descida da câmera
+  const growRef = useRef(0);
+  useFrame((state) => {
+    growRef.current = ease((state.clock.elapsedTime - born.current - 1.2) / 1.2);
   });
 
   return (
-    <group ref={group}>
-      <DotField />
-      {cidades.map((c, i) => (
-        <Arc key={`arc-${c.nome}`} to={project(c.lat, c.lon)} active={active === i} />
+    <>
+      <CameraRig focus={focusPos} introRef={introRef} />
+      <Water />
+      <Municipios data={data} />
+
+      <group position={sedePos}>
+        <GrowingBuilding tipo="sede" active={false} growRef={growRef} />
+        <group position-y={0.72}>
+          <Label text="Sede · Salvador" portal={portal} />
+        </group>
+      </group>
+
+      {cityData.map((c, i) => (
+        <group key={c.cidade.nome} onClick={() => onSelect(i)} onPointerOver={() => (document.body.style.cursor = "pointer")} onPointerOut={() => (document.body.style.cursor = "")}>
+          <Flow from={sedePos.clone().setY(sedePos.y + 0.5)} to={c.center.clone().setY(c.center.y + 0.3)} active={active === i} />
+          {c.units.map(({ u, pos }) => (
+            <group key={u.nome} position={pos}>
+              <GrowingBuilding tipo={u.tipo} active={active === i} growRef={growRef} />
+            </group>
+          ))}
+          <group position={c.center.clone().setY(c.center.y + 0.55)}>
+            <Label text={c.cidade.nome} strong={active === i} portal={portal} />
+          </group>
+        </group>
       ))}
-      <Pin cidade={sede} active={false} isSede portal={portal} />
-      {cidades.map((c, i) => (
-        <Pin key={c.nome} cidade={c} active={active === i} onHover={() => onHover(i)} portal={portal} />
-      ))}
+    </>
+  );
+}
+
+function GrowingBuilding({
+  tipo,
+  active,
+  growRef,
+}: {
+  tipo: Unidade["tipo"];
+  active: boolean;
+  growRef: RefObject<number>;
+}) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(() => {
+    if (ref.current) ref.current.scale.y = Math.max(growRef.current ?? 1, 0.001);
+  });
+  return (
+    <group ref={ref}>
+      <Building tipo={tipo} active={active} />
     </group>
   );
 }
 
-export default function MapScene({ active, onHover }: { active: number; onHover: (i: number) => void }) {
-  // Rótulos HTML vão para uma camada própria (fora da árvore do <Canvas>),
-  // evitando conflito de remoção de nós quando a cena é desmontada.
+export default function MapScene({
+  active,
+  focus,
+  onSelect,
+}: {
+  active: number;
+  focus: number | null;
+  onSelect: (i: number) => void;
+}) {
+  // Rótulos HTML numa camada própria (fora da árvore do <Canvas>)
   const labels = useRef<HTMLDivElement>(null);
   return (
     <div className="relative h-full w-full">
       <div ref={labels} className="pointer-events-none absolute inset-0 z-10 overflow-hidden" />
-      <Canvas dpr={[1, 1.75]} camera={{ position: [0, 5.2, 5.6], fov: 38 }} gl={{ antialias: true, alpha: true }}>
-      <ambientLight intensity={0.6} />
-      <pointLight position={[0, 3, 0]} intensity={4} color="#6dd7d2" />
-      <Scene active={active} onHover={onHover} portal={labels} />
+      <Canvas dpr={[1, 1.75]} camera={{ position: [0.35, 13, 1.2], fov: 38 }} gl={{ antialias: true, alpha: true }}>
+        <fog attach="fog" args={["#0a2226", 6.5, 13]} />
+        <ambientLight intensity={0.55} />
+        <directionalLight position={[3, 8, 5]} intensity={1.6} />
+        <directionalLight position={[-6, 4, -4]} intensity={0.5} color="#6dd7d2" />
+        <Suspense fallback={null}>
+          <Scene active={active} focus={focus} onSelect={onSelect} portal={labels} />
+        </Suspense>
       </Canvas>
     </div>
   );
