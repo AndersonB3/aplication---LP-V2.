@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { LazyCanvas } from "@/components/three/LazyCanvas";
-import { cidades, totalUnidades } from "@/data/atuacao";
+import { cidades, totalUpas, totalLaboratorios } from "@/data/atuacao";
 import { cn } from "@/lib/utils";
 
 const MapScene = dynamic(() => import("@/components/three/MapScene"), { ssr: false });
@@ -30,8 +30,11 @@ export function AtuacaoSection() {
           title="Presentes onde a saúde pública precisa"
           description={
             <>
-              <strong className="text-white">{totalUnidades} unidades</strong> em {cidades.length} municípios baianos, em comunidades
-              urbanas e rurais — levando gestão humanizada a todos.
+              <strong className="text-white">
+                {totalUpas} UPAs e {totalLaboratorios} laboratórios
+              </strong>{" "}
+              em Camaçari e Dias d&apos;Ávila, na Região Metropolitana de Salvador, levando gestão humanizada à
+              população.
             </>
           }
         />
@@ -62,7 +65,7 @@ export function AtuacaoSection() {
                   <div className="flex items-center justify-between">
                     <span className="font-display text-lg font-semibold">{c.nome}</span>
                     <span className="text-sm text-slate-400">
-                      {c.unidades.length} {c.unidades.length > 1 ? "unidades" : "unidade"}
+                      UPA + laboratório
                     </span>
                   </div>
                   <div
@@ -73,7 +76,7 @@ export function AtuacaoSection() {
                   >
                     <ul className="space-y-1.5 overflow-hidden text-sm text-slate-300">
                       {c.unidades.map((u) => (
-                        <li key={u}>{u}</li>
+                        <li key={u.nome}>{u.nome}</li>
                       ))}
                     </ul>
                   </div>

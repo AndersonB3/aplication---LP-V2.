@@ -17,7 +17,7 @@ export function ContactSection() {
             Leve a gestão do ISIBA para o seu município
           </h2>
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-brand-50/90">
-            Converse com nossa equipe sobre a gestão de UPAs, hospitais e serviços de apoio diagnóstico.
+            Converse com nossa equipe sobre a gestão de UPAs e laboratórios de análises clínicas.
           </p>
         </FadeIn>
 

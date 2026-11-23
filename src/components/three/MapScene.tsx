@@ -6,8 +6,9 @@ import { Html, Line } from "@react-three/drei";
 import * as THREE from "three";
 import { cidades, sede, type Cidade } from "@/data/atuacao";
 
-const CENTER = { lat: -12.1, lon: -39.8 };
-const K = 1.25;
+// Enquadra Salvador (sede), Camaçari e Dias d'Ávila
+const CENTER = { lat: -12.77, lon: -38.4 };
+const K = 7;
 
 function project(lat: number, lon: number): [number, number, number] {
   return [(lon - CENTER.lon) * K, 0, -(lat - CENTER.lat) * K];

@@ -18,7 +18,7 @@ const montserrat = Montserrat({
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://isiba.org.br";
 const title = "ISIBA | Gestão Humanizada em Saúde Pública";
 const description =
-  "Instituto de Gestão em Saúde (ISIBA): desde 2006 fortalecendo o SUS com gestão humanizada, eficiência operacional e transparência em UPAs e hospitais públicos.";
+  "Instituto de Gestão em Saúde (ISIBA): desde 2006 fortalecendo o SUS com gestão humanizada, eficiência operacional e transparência na gestão de UPAs e laboratórios.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

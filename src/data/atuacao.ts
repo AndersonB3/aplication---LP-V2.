@@ -1,8 +1,15 @@
+export type TipoUnidade = "upa" | "laboratorio";
+
+export interface Unidade {
+  nome: string;
+  tipo: TipoUnidade;
+}
+
 export interface Cidade {
   nome: string;
   lat: number;
   lon: number;
-  unidades: string[];
+  unidades: Unidade[];
   /** Deslocamento horizontal do rótulo no mapa 3D (evita sobreposição) */
   labelOffset?: number;
 }
@@ -13,43 +20,34 @@ export const sede: Cidade = {
   lat: -12.97,
   lon: -38.5,
   unidades: [],
-  labelOffset: 0.35,
+  labelOffset: -0.55,
 };
 
-/** Unidades geridas — fonte: apresentação institucional ("Atuação de Excelência") */
+/** Unidades sob gestão do ISIBA */
 export const cidades: Cidade[] = [
   {
     nome: "Camaçari",
     lat: -12.7,
     lon: -38.32,
-    labelOffset: 0.45,
+    labelOffset: 0.55,
     unidades: [
-      "UPA Gleba A",
-      "Centro de Atenção à Saúde da Criança",
-      "UPA de Arembepe",
-      "UPA de Abrantes",
-      "UPA de Monte Gordo",
+      { nome: "UPA Gleba A", tipo: "upa" },
+      { nome: "Laboratório AMEX (na UPA Gleba A)", tipo: "laboratorio" },
     ],
   },
   {
     nome: "Dias d'Ávila",
     lat: -12.56,
     lon: -38.36,
-    labelOffset: -0.4,
-    unidades: ["Hospital Dilton Bispo de Santana", "UPA Lucas Evangelista"],
-  },
-  {
-    nome: "Morro do Chapéu",
-    lat: -11.55,
-    lon: -41.16,
-    unidades: ["UPA Tolentino Oliver Guimarães"],
-  },
-  {
-    nome: "Jacobina",
-    lat: -11.18,
-    lon: -40.51,
-    unidades: ["UPA Josefa Maia da Silva"],
+    labelOffset: -0.5,
+    unidades: [
+      { nome: "UPA Lucas Evangelista", tipo: "upa" },
+      { nome: "Laboratório LAMAC", tipo: "laboratorio" },
+    ],
   },
 ];
 
-export const totalUnidades = cidades.reduce((n, c) => n + c.unidades.length, 0);
+const todas = cidades.flatMap((c) => c.unidades);
+export const totalUnidades = todas.length;
+export const totalUpas = todas.filter((u) => u.tipo === "upa").length;
+export const totalLaboratorios = todas.filter((u) => u.tipo === "laboratorio").length;

@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { LazyCanvas } from "@/components/three/LazyCanvas";
 import { HeroVideo } from "@/components/home/HeroVideo";
 import { handleAnchorClick, scrollToSection } from "@/lib/utils";
-import { totalUnidades, cidades } from "@/data/atuacao";
+import { totalUpas, totalLaboratorios } from "@/data/atuacao";
 
 const HeroScene = dynamic(() => import("@/components/three/HeroScene"), { ssr: false });
 
@@ -14,8 +14,8 @@ const ease = [0.22, 1, 0.36, 1] as const;
 
 const destaques = [
   { valor: "2006", rotulo: "Ano de fundação" },
-  { valor: `${totalUnidades}`, rotulo: "Unidades sob gestão" },
-  { valor: `${cidades.length}`, rotulo: "Municípios na Bahia" },
+  { valor: `${totalUpas}`, rotulo: "UPAs sob gestão" },
+  { valor: `${totalLaboratorios}`, rotulo: "Laboratórios" },
   { valor: "97,1%", rotulo: "Avaliações “ótimo”*" },
 ];
 
@@ -77,7 +77,7 @@ export function HeroSection() {
             className="mt-6 max-w-xl text-lg leading-relaxed text-slate-300"
           >
             Organização sem fins lucrativos que, desde 2006, fortalece o Sistema Único de Saúde com a gestão
-            de UPAs e hospitais públicos, pautada pela eficiência, pela transparência e pelo cuidado humanizado.
+            de UPAs e laboratórios públicos, pautada pela eficiência, pela transparência e pelo cuidado humanizado.
           </motion.p>
 
           <motion.div
