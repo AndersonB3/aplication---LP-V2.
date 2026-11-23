@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { LazyCanvas } from "@/components/three/LazyCanvas";
+import { HeroVideo } from "@/components/home/HeroVideo";
 import { handleAnchorClick, scrollToSection } from "@/lib/utils";
 import { totalUnidades, cidades } from "@/data/atuacao";
 
@@ -29,6 +30,8 @@ export function HeroSection() {
 
   return (
     <section id="hero" className="relative isolate overflow-hidden bg-ink-950 text-white">
+      <HeroVideo />
+
       {/* Cena 3D */}
       <LazyCanvas eager className="!absolute inset-x-0 top-0 -z-0 h-[52svh] lg:inset-y-0 lg:h-auto">
         <HeroScene />
